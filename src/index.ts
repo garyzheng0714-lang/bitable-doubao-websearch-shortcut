@@ -1,40 +1,164 @@
-import { basekit, FieldType, field, FieldComponent, FieldCode, NumberFormatter, AuthorizationType } from '@lark-opdev/block-basekit-server-api';
+import { basekit, FieldType, field, FieldComponent, FieldCode, AuthorizationType } from '@lark-opdev/block-basekit-server-api';
 const { t } = field;
 
-const feishuDm = ['feishu.cn', 'feishucdn.com', 'larksuitecdn.com', 'larksuite.com'];
-// 通过addDomainList添加请求接口的域名，不可写多个addDomainList，否则会被覆盖
-basekit.addDomainList([...feishuDm, 'api.exchangerate-api.com',]);
+// 添加火山引擎域名白名单
+basekit.addDomainList(['ark.cn-beijing.volces.com']);
 
 basekit.addField({
   // 定义捷径的i18n语言资源
   i18n: {
     messages: {
       'zh-CN': {
-        'rmb': '人民币金额',
-        'usd': '美元金额',
-        'rate': '汇率',
+        'modelType': '模型类型',
+        'customModel': '自定义模型名称',
+        'apiKey': 'API Key',
+        'prompt': '输入指令',
+        'images': '图片内容',
+        'webSearch': '联网搜索',
+        'thinkingMode': '深度思考',
+        'thinking_auto': 'AI 自动判断',
+        'thinking_enable': '进行深度思考',
+        'thinking_disable': '不进行深度思考',
+        'open': '开启',
+        'close': '关闭',
+        'result': '输出结果',
+        'thinking': '思考过程',
+        'usage': 'Tokens 数量',
+        'cost': '模型费用(¥)',
+        'help_apikey': '获取 API Key',
       },
       'en-US': {
-        'rmb': 'RMB Amount',
-        'usd': 'Dollar amount',
-        'rate': 'Exchange Rate',
+        'modelType': 'Model Type',
+        'customModel': 'Custom Model Name',
+        'apiKey': 'API Key',
+        'prompt': 'Instruction',
+        'images': 'Images',
+        'webSearch': 'Web Search',
+        'thinkingMode': 'Deep Thinking',
+        'thinking_auto': 'Auto',
+        'thinking_enable': 'Enabled',
+        'thinking_disable': 'Disabled',
+        'open': 'On',
+        'close': 'Off',
+        'result': 'Result',
+        'thinking': 'Thinking Process',
+        'usage': 'Tokens Usage',
+        'cost': 'Model Cost (¥)',
+        'help_apikey': 'Get API Key',
       },
       'ja-JP': {
-        'rmb': '人民元の金額',
-        'usd': 'ドル金額',
-        'rate': '為替レート',
+        'modelType': 'モデルタイプ',
+        'customModel': 'カスタムモデル名',
+        'apiKey': 'APIキー',
+        'prompt': '入力指示',
+        'images': '画像コンテンツ',
+        'webSearch': 'Web検索',
+        'thinkingMode': '深い思考',
+        'thinking_auto': '自動',
+        'thinking_enable': '有効',
+        'thinking_disable': '無効',
+        'open': 'オン',
+        'close': 'オフ',
+        'result': '出力結果',
+        'thinking': '思考プロセス',
+        'usage': 'トークン数',
+        'cost': 'モデル費用(¥)',
+        'help_apikey': 'APIキーを取得',
       },
     }
   },
   // 定义捷径的入参
   formItems: [
     {
-      key: 'account',
-      label: t('rmb'),
+      key: 'modelType',
+      label: t('modelType'),
+      component: FieldComponent.SingleSelect,
+      props: {
+        options: [
+          { label: 'doubao-seed-1-8-251228', value: 'doubao-seed-1-8-251228' },
+          { label: 'doubao-seed-1-6-251015', value: 'doubao-seed-1-6-251015' },
+          { label: 'doubao-seed-1-6-flash-250828', value: 'doubao-seed-1-6-flash-250828' },
+          { label: 'doubao-seed-1-6-lite-251015', value: 'doubao-seed-1-6-lite-251015' },
+          { label: 'doubao-seed-1-6-thinking-250715', value: 'doubao-seed-1-6-thinking-250715' },
+          { label: '自定义模型', value: 'custom' },
+        ],
+      },
+      validator: {
+        required: true,
+      }
+    },
+    {
+      key: 'customModel',
+      label: t('customModel'),
+      component: FieldComponent.Input,
+      props: {
+        placeholder: 'doubao-...',
+      },
+    },
+    {
+      key: 'prompt',
+      label: t('prompt'),
+      component: FieldComponent.Input,
+      props: {
+        placeholder: '',
+      },
+      validator: {
+        required: true,
+      }
+    },
+    {
+      key: 'images',
+      label: t('images'),
       component: FieldComponent.FieldSelect,
       props: {
-        supportType: [FieldType.Number],
+        supportType: [FieldType.Text, FieldType.Url],
       },
+    },
+    {
+      key: 'thinkingMode',
+      label: t('thinkingMode'),
+      component: FieldComponent.SingleSelect,
+      props: {
+        options: [
+          { label: t('thinking_auto'), value: 'auto' },
+          { label: t('thinking_enable'), value: 'enable' },
+          { label: t('thinking_disable'), value: 'disable' },
+        ],
+      },
+      defaultValue: 'auto',
+      validator: {
+        required: true,
+      }
+    },
+    {
+      key: 'webSearch',
+      label: t('webSearch'),
+      component: FieldComponent.Radio,
+      props: {
+        options: [
+          { label: t('open'), value: 'true' },
+          { label: t('close'), value: 'false' },
+        ],
+      },
+      defaultValue: 'false',
+      validator: {
+        required: true,
+      }
+    },
+    {
+      key: 'apiKey',
+      label: t('apiKey'),
+      component: FieldComponent.Input,
+      props: {
+        placeholder: 'sk-...',
+      },
+      tooltips: [
+        {
+          type: 'link',
+          text: t('help_apikey'),
+          link: 'https://www.volcengine.com/docs/82379/1399008?lang=zh'
+        }
+      ],
       validator: {
         required: true,
       }
@@ -49,84 +173,96 @@ basekit.addField({
       },
       properties: [
         {
-          key: 'id',
-          isGroupByKey: true,
+          key: 'groupKey',
           type: FieldType.Text,
           label: 'id',
+          isGroupByKey: true,
           hidden: true,
         },
         {
-          key: 'usd',
-          type: FieldType.Number,
-          label: t('usd'),
+          key: 'result',
+          type: FieldType.Text,
+          label: t('result'),
           primary: true,
-          extra: {
-            formatter: NumberFormatter.DIGITAL_ROUNDED_2,
-          }
         },
         {
-          key: 'rate',
+          key: 'thinking',
+          type: FieldType.Text,
+          label: t('thinking'),
+        },
+        {
+          key: 'usage',
+          type: FieldType.Text,
+          label: t('usage'),
+        },
+        {
+          key: 'cost',
           type: FieldType.Number,
-          label: t('rate'),
-          extra: {
-            formatter: NumberFormatter.DIGITAL_ROUNDED_4,
-          }
+          label: t('cost'),
         },
       ],
     },
   },
-  // formItemParams 为运行时传入的字段参数，对应字段配置里的 formItems （如引用的依赖字段）
-  execute: async (formItemParams: { account: number }, context) => {
-    const { account = 0 } = formItemParams;
-    /** 
-         * 为方便查看日志，使用此方法替代console.log
-         * 开发者可以直接使用这个工具函数进行日志记录
-         */
+  // formItemParams 为运行时传入的字段参数
+  execute: async (formItemParams: any, context) => {
+    const { modelType, customModel, apiKey, prompt, images, webSearch, thinkingMode } = formItemParams;
+    const normalizeValue = (val: any) => {
+      if (val && typeof val === 'object' && 'value' in val) return (val as any).value;
+      return val;
+    };
+    const normalizedModelType = normalizeValue(modelType);
+    const normalizedCustomModel = normalizeValue(customModel);
+    const normalizedWebSearch = normalizeValue(webSearch);
+    const normalizedThinkingMode = normalizeValue(thinkingMode);
+    const normalizedPrompt = normalizeValue(prompt);
+
+    // 日志记录函数
     function debugLog(arg: any, showContext = false) {
-      // @ts-ignore
       if (!showContext) {
+        // @ts-ignore
         console.log(JSON.stringify({ arg, logID: context.logID }), '\n');
         return;
       }
+      const safeFormItemParams = {
+        ...formItemParams,
+        apiKey: apiKey ? '***' : apiKey,
+      };
       console.log(JSON.stringify({
-        formItemParams,
+        formItemParams: safeFormItemParams,
         context,
         arg
       }), '\n');
     }
 
-    // 入口第一行日志，展示formItemParams和context，方便调试
-    // 每次修改版本时，都需要修改日志版本号，方便定位问题
-    debugLog('=====start=====v1', true);
+    debugLog('=====start=====v2.1', true);
 
-    /** 
-     * 封装好的fetch函数 - 开发者请尽量使用这个封装，而不是直接调用context.fetch
-     * 这个封装会自动处理日志记录和错误捕获，简化开发工作
-     */
+    // 封装 fetch 函数
     const fetch: <T = Object>(...arg: Parameters<typeof context.fetch>) => Promise<T | { code: number, error: any, [p: string]: any }> = async (url, init, authId) => {
       try {
         const res = await context.fetch(url, init, authId);
-        // 不要直接.json()，因为接口返回的可能不是json格式，会导致解析错误
         const resText = await res.text();
-
-        // 自动记录请求结果日志
+        const safeInit = {
+          ...init,
+          headers: init?.headers
+            ? {
+                ...(init.headers as any),
+                Authorization: (init.headers as any)?.Authorization ? 'Bearer ***' : (init.headers as any)?.Authorization,
+              }
+            : init?.headers,
+        };
         debugLog({
-          [`===fetch res： ${url} 接口返回结果`]: {
+          [`===fetch res： ${url}`]: {
             url,
-            init,
-            authId,
-            resText: resText.slice(0, 4000), // 截取部分日志避免日志量过大
+            init: safeInit,
+            resText: resText.slice(0, 4000), // 截取日志
           }
         });
-
         return JSON.parse(resText);
       } catch (e) {
-        // 自动记录错误日志
         debugLog({
-          [`===fetch error： ${url} 接口返回错误`]: {
+          [`===fetch error： ${url}`]: {
             url,
             init,
-            authId,
             error: e
           }
         });
@@ -138,52 +274,193 @@ basekit.addField({
     };
 
     try {
+      // 1. 处理图片输入
+      const imageUrls: string[] = [];
+      if (images) {
+        // FieldSelect 返回的值可能是数组（如果是多选）或单个值
+        // 这里假设 FieldSelect 绑定的字段值是字符串（URL或逗号分隔的URL）
+        // 注意：basekit 传进来的 images 通常是字段的原始值
+        // 如果是 Text/Url 字段，通常是 string 或 { text: string, link: string } (Url type structure)
+        // 但为了通用性，我们先转成 string 处理
+        let rawImageVal = '';
+        if (typeof images === 'string') {
+          rawImageVal = images;
+        } else if (Array.isArray(images)) {
+           // 如果是附件或者多行文本数组
+           rawImageVal = images.map(item => item.text || item).join(',');
+        } else if (typeof images === 'object' && images !== null) {
+            // URL 字段结构可能包含 link 属性
+             // @ts-ignore
+            rawImageVal = images.link || images.text || JSON.stringify(images);
+        }
 
-      interface ExchangeRateResponse {
-        rates: {
-          [currency: string]: number
+        if (rawImageVal) {
+          rawImageVal.split(/[,，\n]/).forEach((url: string) => {
+            const cleanUrl = url.trim();
+            if (cleanUrl && cleanUrl.startsWith('http')) {
+              imageUrls.push(cleanUrl);
+            }
+          });
         }
       }
 
-      const res = await fetch<ExchangeRateResponse>('https://api.exchangerate-api.com/v4/latest/CNY2', { // 已经在addDomainList中添加为白名单的请求
-        method: 'GET',
+      // 2. 构造 API 请求 Body
+      const apiUrl = 'https://ark.cn-beijing.volces.com/api/v3/responses'; // 使用 Responses API
+      
+      let input: any;
+      const shouldUseWebSearch = normalizedWebSearch === 'true' || normalizedWebSearch === true;
+      if (imageUrls.length > 0) {
+        const maxImageCount = 10;
+        const limitedImageUrls = imageUrls.slice(0, maxImageCount);
+
+        // 多模态输入
+        const content = [
+          { type: 'input_text', text: String(normalizedPrompt ?? '') }
+        ];
+        limitedImageUrls.forEach(url => {
+          content.push({ type: 'input_image', image_url: { url } } as any);
+        });
+        
+        // Responses API input 格式：可以是 string 或 list of messages
+        // 对于多模态，需要使用 message 格式
+        input = [
+            {
+                role: 'user',
+                content: content
+            }
+        ];
+      } else if (shouldUseWebSearch) {
+        input = [
+          {
+            role: 'user',
+            content: String(normalizedPrompt ?? ''),
+          },
+        ];
+      } else {
+        // 纯文本
+        input = String(normalizedPrompt ?? '');
+      }
+
+      const finalModel = normalizedModelType === 'custom'
+        ? String(normalizedCustomModel ?? '').trim()
+        : String(normalizedModelType ?? '').trim();
+
+      if (!finalModel) {
+        throw new Error('model 不能为空：请选择模型或填写自定义模型名称');
+      }
+
+      const requestBody: any = {
+        model: finalModel,
+        input: input,
+      };
+
+      // 处理联网搜索
+      if (shouldUseWebSearch) {
+        requestBody.tools = [
+          {
+            type: 'web_search',
+            max_keyword: 2,
+          },
+        ];
+      }
+
+      // 处理深度思考
+      if (normalizedThinkingMode === 'enable') {
+        requestBody.thinking = { type: 'enabled' };
+      } else if (normalizedThinkingMode === 'disable') {
+        requestBody.thinking = { type: 'disabled' };
+      }
+      // 'auto' 模式不传递 thinking 参数，使用默认行为
+
+      // 3. 发起请求
+      const res: any = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(requestBody),
       });
 
-      const usdRate = res?.rates?.['USD'];
+      if (res.code === -1 || res.error) {
+         throw new Error(JSON.stringify(res.error));
+      }
 
+      // 4. 解析结果
+      // Responses API standard response: { output: [{ message: { content: ... } }], usage: ... }
+      
+      let resultText = '';
+      let thinkingText = '';
+      let usageInfo = { input_tokens: 0, output_tokens: 0 };
+
+      if (res.choices && res.choices.length > 0) {
+          // OpenAI compatible format
+          resultText = res.choices[0].message.content;
+          usageInfo = {
+            input_tokens: Number(res?.usage?.input_tokens ?? res?.usage?.prompt_tokens ?? 0),
+            output_tokens: Number(res?.usage?.output_tokens ?? res?.usage?.completion_tokens ?? 0),
+          };
+      } else if (Array.isArray(res?.output) && res.output.length > 0) {
+          const outputs = res.output;
+          const messageOutput = outputs.find((o: any) => o?.type === 'message' && o?.role === 'assistant') || outputs.find((o: any) => o?.type === 'message');
+          const reasoningOutput = outputs.find((o: any) => o?.type === 'reasoning');
+
+          if (reasoningOutput?.summary && Array.isArray(reasoningOutput.summary)) {
+            thinkingText = reasoningOutput.summary.map((s: any) => s?.text || '').join('\n');
+          }
+
+          const messageContent = messageOutput?.content ?? messageOutput?.message?.content;
+          if (typeof messageContent === 'string') {
+            resultText = messageContent;
+          } else if (Array.isArray(messageContent)) {
+            resultText = messageContent.map((p: any) => p?.text || '').join('');
+          }
+
+          usageInfo = {
+            input_tokens: Number(res?.usage?.input_tokens ?? 0),
+            output_tokens: Number(res?.usage?.output_tokens ?? 0),
+          };
+      }
+
+      // 5. 计算费用
+      // 价格 (元/百万token)
+      // doubao-seed-1.8: 输入 0.8, 输出 2.0
+      // doubao-seed-1.6: 输入 0.8, 输出 2.0
+      // 两个模型价格一致
+      const priceInput = 0.8;
+      const priceOutput = 2.0;
+
+      const inputCost = (usageInfo.input_tokens / 1000000) * priceInput;
+      const outputCost = (usageInfo.output_tokens / 1000000) * priceOutput;
+      const totalCost = parseFloat((inputCost + outputCost).toFixed(10));
+      const groupKey = String((context as any)?.recordID || (context as any)?.logID || Date.now());
 
       return {
         code: FieldCode.Success,
         data: {
-          id: `${Math.random()}`,
-          usd: parseFloat((account * usdRate).toFixed(4)),
-          rate: usdRate,
+          groupKey,
+          result: resultText || '未获取到结果，请检查 API Key 和模型名称',
+          thinking: thinkingText,
+          usage: `输入：${usageInfo.input_tokens} tokens，输出：${usageInfo.output_tokens} tokens`,
+          cost: totalCost,
         }
       }
 
-      /*
-        如果错误原因明确，想要向使用者传递信息，要避免直接报错，可将错误信息当作成功结果返回：
-
-      return {
-        code: FieldCode.Success,
-        data: {
-          id: `具体错误原因`,
-          usd: 0,
-          rate: 0,
-        }
-      }
-
-      */
     } catch (e) {
       console.log('====error', String(e));
       debugLog({
         '===999 异常错误': String(e)
       });
-      /** 返回非 Success 的错误码，将会在单元格上显示报错，请勿返回msg、message之类的字段，它们并不会起作用。
-       * 对于未知错误，请直接返回 FieldCode.Error，然后通过查日志来排查错误原因。
-       */
+      const groupKey = String((context as any)?.recordID || (context as any)?.logID || Date.now());
       return {
-        code: FieldCode.Error,
+        code: FieldCode.Success,
+        data: {
+            groupKey,
+            result: `Error: ${String(e)}`,
+            thinking: '',
+            usage: '',
+            cost: 0,
+        }
       }
     }
   },
