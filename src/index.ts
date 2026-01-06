@@ -199,6 +199,9 @@ basekit.addField({
           key: 'cost',
           type: FieldType.Number,
           label: t('cost'),
+          extra: {
+            formatter: '0.0000000' as any,
+          },
         },
       ],
     },
@@ -309,17 +312,17 @@ basekit.addField({
       
       let input: any;
       const shouldUseWebSearch = normalizedWebSearch === 'true' || normalizedWebSearch === true;
+      const shouldUseWebSearchTool = shouldUseWebSearch;
       if (imageUrls.length > 0) {
         const maxImageCount = 10;
         const limitedImageUrls = imageUrls.slice(0, maxImageCount);
 
         // 多模态输入
-        const content = [
-          { type: 'input_text', text: String(normalizedPrompt ?? '') }
-        ];
+        const content: any[] = [];
         limitedImageUrls.forEach(url => {
-          content.push({ type: 'input_image', image_url: { url } } as any);
+          content.push({ type: 'input_image', image_url: url } as any);
         });
+        content.push({ type: 'input_text', text: String(normalizedPrompt ?? '') });
         
         // Responses API input 格式：可以是 string 或 list of messages
         // 对于多模态，需要使用 message 格式
@@ -329,7 +332,7 @@ basekit.addField({
                 content: content
             }
         ];
-      } else if (shouldUseWebSearch) {
+      } else if (shouldUseWebSearchTool) {
         input = [
           {
             role: 'user',
@@ -355,7 +358,7 @@ basekit.addField({
       };
 
       // 处理联网搜索
-      if (shouldUseWebSearch) {
+      if (shouldUseWebSearchTool) {
         requestBody.tools = [
           {
             type: 'web_search',
