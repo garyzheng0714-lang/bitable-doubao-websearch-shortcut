@@ -1,17 +1,62 @@
 import { basekit, FieldType, field, FieldComponent, FieldCode, AuthorizationType } from '@lark-opdev/block-basekit-server-api';
+import FormData from 'form-data';
 const { t } = field;
 
 // 添加火山引擎域名白名单
-basekit.addDomainList(['ark.cn-beijing.volces.com']);
+basekit.addDomainList([
+  'ark.cn-beijing.volces.com',
+  'open.feishu.cn',
+  'open.larksuite.com',
+  'internal-api-drive-stream.feishu.cn',
+  'internal-api-drive-stream.larksuite.com',
+  'img.alicdn.com',
+  'img30.360buyimg.com',
+  'thumbnail.coupangcdn.com',
+  'images-eu.ssl-images-amazon.com',
+  'product-files.pupumall.com',
+  'sam-material-online-1302115363.file.myqcloud.com',
+  'img.pddpic.com',
+  'img.youpin.mi-img.com',
+  'pub.ddimg.mobi',
+  'p1.meituan.net',
+  'f.nooncdn.com',
+  'rukminim2.flixcart.com',
+  'ir.ozone.ru',
+  'basket-06.wbcontent.net',
+  'img06.weeecdn.com',
+  'cdn.yamibuy.net',
+  'http2.mlstatic.com',
+  'i.imgur.com',
+  'imgur.com',
+  'i.ibb.co',
+  'ibb.co',
+  'i.postimg.cc',
+  'postimg.cc',
+  'raw.githubusercontent.com',
+  'user-images.githubusercontent.com',
+  'images.unsplash.com',
+  'images.pexels.com',
+  'i.pinimg.com',
+  'pbs.twimg.com',
+  'lh3.googleusercontent.com',
+  'lh4.googleusercontent.com',
+  'lh5.googleusercontent.com',
+  'lh6.googleusercontent.com',
+  'i.redd.it',
+  'preview.redd.it',
+  'external-preview.redd.it',
+  'cdn.discordapp.com',
+  'media.discordapp.net',
+]);
 
 basekit.addField({
   // 定义捷径的i18n语言资源
   i18n: {
     messages: {
       'zh-CN': {
-        'modelType': '模型类型',
+        'modelType': '模型选择',
         'customModel': '自定义模型名称',
-        'apiKey': 'API Key',
+        'apiKey': '自定义Key',
         'prompt': '输入指令',
         'images': '图片内容',
         'webSearch': '联网搜索',
@@ -25,12 +70,15 @@ basekit.addField({
         'thinking': '思考过程',
         'usage': 'Tokens 数量',
         'cost': '模型费用(¥)',
-        'help_apikey': '获取 API Key',
+        'help_apikey': '获取 Key',
+        'help_customKey': '非必填；默认已内置 Key。若捷径无法使用，可填写你自己的 Key 进行尝试',
+        'help_modelType': '选择预置模型；如需使用其他模型，请选择“自定义模型”并填写下方名称',
+        'help_webSearch_pricing': '查看计费规则',
       },
       'en-US': {
-        'modelType': 'Model Type',
+        'modelType': 'Model Selection',
         'customModel': 'Custom Model Name',
-        'apiKey': 'API Key',
+        'apiKey': 'Custom Key',
         'prompt': 'Instruction',
         'images': 'Images',
         'webSearch': 'Web Search',
@@ -44,12 +92,15 @@ basekit.addField({
         'thinking': 'Thinking Process',
         'usage': 'Tokens Usage',
         'cost': 'Model Cost (¥)',
-        'help_apikey': 'Get API Key',
+        'help_apikey': 'Get Key',
+        'help_customKey': 'Optional. A default key is built-in. If it does not work, try your own key.',
+        'help_modelType': 'Choose a preset model. To use another model, select “Custom Model” and fill in the name below.',
+        'help_webSearch_pricing': 'Pricing rules',
       },
       'ja-JP': {
-        'modelType': 'モデルタイプ',
+        'modelType': 'モデル選択',
         'customModel': 'カスタムモデル名',
-        'apiKey': 'APIキー',
+        'apiKey': 'カスタムキー',
         'prompt': '入力指示',
         'images': '画像コンテンツ',
         'webSearch': 'Web検索',
@@ -63,7 +114,10 @@ basekit.addField({
         'thinking': '思考プロセス',
         'usage': 'トークン数',
         'cost': 'モデル費用(¥)',
-        'help_apikey': 'APIキーを取得',
+        'help_apikey': 'キーを取得',
+        'help_customKey': '任意。デフォルトのキーは内蔵されています。動作しない場合は、ご自身のキーを入力してお試しください。',
+        'help_modelType': 'プリセットモデルを選択します。その他のモデルを使う場合は「カスタムモデル」を選び、下の名称を入力してください。',
+        'help_webSearch_pricing': '料金ルールを見る',
       },
     }
   },
@@ -83,6 +137,12 @@ basekit.addField({
           { label: '自定义模型', value: 'custom' },
         ],
       },
+      tooltips: [
+        {
+          type: 'text',
+          content: t('help_modelType'),
+        },
+      ],
       validator: {
         required: true,
       }
@@ -92,7 +152,7 @@ basekit.addField({
       label: t('customModel'),
       component: FieldComponent.Input,
       props: {
-        placeholder: 'doubao-...',
+        placeholder: '非必填，仅当选择“自定义模型”选项时生效',
       },
     },
     {
@@ -111,7 +171,7 @@ basekit.addField({
       label: t('images'),
       component: FieldComponent.FieldSelect,
       props: {
-        supportType: [FieldType.Text, FieldType.Url],
+        supportType: [FieldType.Text, FieldType.Url, FieldType.Attachment],
       },
     },
     {
@@ -136,10 +196,17 @@ basekit.addField({
       component: FieldComponent.Radio,
       props: {
         options: [
-          { label: t('open'), value: 'true' },
           { label: t('close'), value: 'false' },
+          { label: t('open'), value: 'true' },
         ],
       },
+      tooltips: [
+        {
+          type: 'link',
+          text: t('help_webSearch_pricing'),
+          link: 'https://www.volcengine.com/docs/82379/1338550?lang=zh',
+        },
+      ],
       defaultValue: 'false',
       validator: {
         required: true,
@@ -150,18 +217,19 @@ basekit.addField({
       label: t('apiKey'),
       component: FieldComponent.Input,
       props: {
-        placeholder: 'sk-...',
+        placeholder: '非必填；留空则使用默认 Key',
       },
       tooltips: [
+        {
+          type: 'text',
+          content: t('help_customKey'),
+        },
         {
           type: 'link',
           text: t('help_apikey'),
           link: 'https://www.volcengine.com/docs/82379/1399008?lang=zh'
         }
       ],
-      validator: {
-        required: true,
-      }
     },
   ],
   // 定义捷径的返回结果类型
@@ -218,6 +286,9 @@ basekit.addField({
     const normalizedWebSearch = normalizeValue(webSearch);
     const normalizedThinkingMode = normalizeValue(thinkingMode);
     const normalizedPrompt = normalizeValue(prompt);
+    const DEFAULT_KEY = '42613b83-f46c-468f-98b1-2036c8dc5a68';
+    const normalizedApiKey = String(normalizeValue(apiKey) ?? '').trim();
+    const effectiveApiKey = normalizedApiKey || DEFAULT_KEY;
 
     // 日志记录函数
     function debugLog(arg: any, showContext = false) {
@@ -230,9 +301,19 @@ basekit.addField({
         ...formItemParams,
         apiKey: apiKey ? '***' : apiKey,
       };
+      const safeContext = {
+        logID: (context as any)?.logID,
+        timeZone: (context as any)?.timeZone,
+        tenantKey: (context as any)?.tenantKey,
+        baseID: (context as any)?.baseID,
+        tableID: (context as any)?.tableID,
+        recordID: (context as any)?.recordID,
+        packID: (context as any)?.packID,
+        extensionID: (context as any)?.extensionID,
+      };
       console.log(JSON.stringify({
         formItemParams: safeFormItemParams,
-        context,
+        context: safeContext,
         arg
       }), '\n');
     }
@@ -278,34 +359,269 @@ basekit.addField({
 
     try {
       // 1. 处理图片输入
-      const imageUrls: string[] = [];
-      if (images) {
-        // FieldSelect 返回的值可能是数组（如果是多选）或单个值
-        // 这里假设 FieldSelect 绑定的字段值是字符串（URL或逗号分隔的URL）
-        // 注意：basekit 传进来的 images 通常是字段的原始值
-        // 如果是 Text/Url 字段，通常是 string 或 { text: string, link: string } (Url type structure)
-        // 但为了通用性，我们先转成 string 处理
-        let rawImageVal = '';
-        if (typeof images === 'string') {
-          rawImageVal = images;
-        } else if (Array.isArray(images)) {
-           // 如果是附件或者多行文本数组
-           rawImageVal = images.map(item => item.text || item).join(',');
-        } else if (typeof images === 'object' && images !== null) {
-            // URL 字段结构可能包含 link 属性
-             // @ts-ignore
-            rawImageVal = images.link || images.text || JSON.stringify(images);
+      const imageInputItems: any[] = [];
+      const appendImageUrl = (url: string) => {
+        const clean = String(url ?? '').trim();
+        if (/^https?:\/\//i.test(clean)) {
+          imageInputItems.push({ type: 'input_image', image_url: clean } as any);
         }
-
-        if (rawImageVal) {
-          rawImageVal.split(/[,，\n]/).forEach((url: string) => {
-            const cleanUrl = url.trim();
-            if (cleanUrl && cleanUrl.startsWith('http')) {
-              imageUrls.push(cleanUrl);
-            }
+      };
+      const appendUrlsFromText = (text: string) => {
+        String(text ?? '')
+          .split(/[,，\n]/)
+          .map(s => s.trim())
+          .filter(Boolean)
+          .forEach(appendImageUrl);
+      };
+      const extractUrlsFromUnknown = (val: any) => {
+        if (typeof val === 'string') {
+          appendUrlsFromText(val);
+          return;
+        }
+        if (val && typeof val === 'object') {
+          const candidates = [
+            (val as any).tmp_url,
+            (val as any).tmpUrl,
+            (val as any).download_url,
+            (val as any).downloadUrl,
+            (val as any).preview_url,
+            (val as any).previewUrl,
+            (val as any).link,
+            (val as any).url,
+            (val as any).text,
+          ];
+          candidates.forEach(candidate => {
+            if (typeof candidate === 'string') appendUrlsFromText(candidate);
           });
         }
+      };
+      const extractUrlsFromExtra = (extra: any) => {
+        let raw: any = extra;
+        if (typeof raw === 'string') {
+          try {
+            raw = JSON.parse(raw);
+          } catch {
+            raw = extra;
+          }
+        }
+        if (typeof raw === 'string') {
+          appendUrlsFromText(raw);
+          return;
+        }
+        if (raw && typeof raw === 'object') {
+          const keys = ['url', 'link', 'tmp_url', 'tmpUrl', 'download_url', 'downloadUrl', 'preview_url', 'previewUrl'];
+          keys.forEach(k => {
+            if (typeof raw[k] === 'string') appendImageUrl(raw[k]);
+          });
+          if (Array.isArray(raw.urls)) raw.urls.forEach((u: any) => typeof u === 'string' && appendImageUrl(u));
+          if (Array.isArray(raw.links)) raw.links.forEach((u: any) => typeof u === 'string' && appendImageUrl(u));
+        }
+      };
+      const downloadAttachmentBuffer = async (attachmentToken: string) => {
+        const token = String(attachmentToken ?? '').trim();
+        if (!token) return undefined;
+        const urls = [
+          `https://open.feishu.cn/open-apis/drive/v1/medias/${token}/download`,
+          `https://open.larksuite.com/open-apis/drive/v1/medias/${token}/download`,
+        ];
+        for (const url of urls) {
+          try {
+            const res = await context.fetch(url, { method: 'GET' });
+            if (!res.ok) continue;
+            const buf = await (res as any).buffer();
+            if (buf && buf.length > 0) return buf as Buffer;
+          } catch {
+          }
+        }
+        return undefined;
+      };
+      const downloadByUrlBuffer = async (url: string) => {
+        const u = String(url ?? '').trim();
+        if (!/^https?:\/\//i.test(u)) return { status: 0 } as { status: number; buf?: Buffer; contentType?: string };
+        try {
+          const referer = (() => {
+            try {
+              return new URL(u).origin + '/';
+            } catch {
+              return undefined;
+            }
+          })();
+          const res = await context.fetch(u, {
+            method: 'GET',
+            headers: {
+              'User-Agent': 'Mozilla/5.0',
+              Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+              ...(referer ? { Referer: referer } : {}),
+            } as any,
+          });
+          if (!res.ok) return { status: res.status };
+          const contentType = (res.headers as any)?.get?.('content-type') || undefined;
+          const buf = await (res as any).buffer();
+          if (buf && buf.length > 0) return { status: res.status, buf: buf as Buffer, contentType };
+        } catch {
+        }
+        return { status: 0 };
+      };
+      const formatArkErrorMessage = (payload: any, status?: number) => {
+        const err = payload?.error ?? payload;
+        const code = err?.code ?? err?.type;
+        const message = err?.message ?? err?.error?.message ?? '';
+        const normalized = String([code, message].filter(Boolean).join(': ')).trim();
+        const lower = normalized.toLowerCase();
+        const isAuth =
+          status === 401 ||
+          status === 403 ||
+          code === 'AuthenticationError' ||
+          code === 'Unauthorized' ||
+          err?.type === 'Unauthorized' ||
+          /unauthorized|forbidden/.test(lower) ||
+          (/api key/.test(lower) && /(deleted|disable|disabled|invalid|expired)/.test(lower));
+        if (isAuth) {
+          return `API Key 无效或已被禁用/删除，请更新 Key 后重试${normalized ? `（${normalized}）` : ''}`;
+        }
+        return normalized;
+      };
+      const uploadBufferToArk = async (fileBuffer: Buffer, filename: string, mimeType?: string) => {
+        const form = new FormData();
+        form.append('purpose', 'user_data');
+        form.append('file', fileBuffer, {
+          filename: filename || 'image',
+          contentType: mimeType || 'application/octet-stream',
+        } as any);
+        const res = await context.fetch('https://ark.cn-beijing.volces.com/api/v3/files', {
+          method: 'POST',
+          headers: {
+            ...(form as any).getHeaders(),
+            Authorization: `Bearer ${effectiveApiKey}`,
+          },
+          body: form as any,
+        });
+        const text = await res.text();
+        let json: any;
+        try {
+          json = JSON.parse(text);
+        } catch {
+          json = undefined;
+        }
+        const fileId = json?.id ?? json?.data?.id ?? json?.file?.id;
+        if (!res.ok || !fileId) {
+          const errMsg = formatArkErrorMessage(json, res.status);
+          if (errMsg.startsWith('API Key')) throw new Error(errMsg);
+          throw new Error(`上传图片失败：${errMsg || text.slice(0, 2000)}`);
+        }
+        return String(fileId);
+      };
+
+      if (images) {
+        if (
+          Array.isArray(images) &&
+          images.length > 0 &&
+          images.some((item: any) => {
+            if (!item || typeof item !== 'object') return false;
+            if ('attachmentToken' in item) return true;
+            if ('tmp_url' in item || 'tmpUrl' in item) return true;
+            if ('download_url' in item || 'downloadUrl' in item) return true;
+            if ('preview_url' in item || 'previewUrl' in item) return true;
+            return false;
+          })
+        ) {
+          const beforeTotal = imageInputItems.length;
+          const attachmentImageCount = (images as any[]).filter(item => {
+            if (!item || typeof item !== 'object') return false;
+            const mimeType = (item as any).mimeType ?? (item as any).type;
+            if (mimeType && !String(mimeType).startsWith('image/')) return false;
+            return Boolean(
+              (item as any).attachmentToken ||
+              (item as any).tmp_url ||
+              (item as any).tmpUrl ||
+              (item as any).download_url ||
+              (item as any).downloadUrl ||
+              (item as any).preview_url ||
+              (item as any).previewUrl
+            );
+          }).length;
+          for (const item of images as any[]) {
+            if (imageInputItems.length >= 10) break;
+            if (!item || typeof item !== 'object') continue;
+            const mimeType = (item as any).mimeType ?? (item as any).type;
+            if (mimeType && !String(mimeType).startsWith('image/')) continue;
+
+            const directUrl =
+              (item as any).tmp_url ||
+              (item as any).tmpUrl ||
+              (item as any).download_url ||
+              (item as any).downloadUrl ||
+              (item as any).preview_url ||
+              (item as any).previewUrl ||
+              (item as any).url ||
+              (item as any).link;
+            if (directUrl) {
+              const { buf } = await downloadByUrlBuffer(String(directUrl));
+              if (buf) {
+                const fileId = await uploadBufferToArk(buf, String((item as any).name ?? 'image'), mimeType);
+                imageInputItems.push({ type: 'input_image', file_id: fileId } as any);
+                continue;
+              }
+            }
+
+            const beforeCount = imageInputItems.length;
+            extractUrlsFromExtra((item as any).extra);
+            if (imageInputItems.length >= 10) break;
+            if (imageInputItems.length > beforeCount) continue;
+
+            const attachmentToken = (item as any).attachmentToken;
+            if (attachmentToken) {
+              const buf = await downloadAttachmentBuffer(String(attachmentToken));
+              if (!buf) continue;
+              const fileId = await uploadBufferToArk(buf, String((item as any).name ?? 'image'), mimeType);
+              imageInputItems.push({ type: 'input_image', file_id: fileId } as any);
+            }
+          }
+          if (attachmentImageCount > 0 && imageInputItems.length === beforeTotal) {
+            throw new Error('图片附件解析失败：请确认附件为图片且当前有权限下载该附件');
+          }
+        } else if (Array.isArray(images)) {
+          images.forEach(v => extractUrlsFromUnknown(v));
+        } else {
+          extractUrlsFromUnknown(images);
+        }
       }
+      const resolveImageInputItems = async (items: any[]) => {
+        const resolved: any[] = [];
+        const hasImageUrl = items.some(it => it && typeof it === 'object' && typeof it.image_url === 'string');
+        const urlItems = items.filter(it => it && typeof it === 'object' && typeof it.image_url === 'string');
+        const urlToFilename = (url: string) => {
+          try {
+            const u = new URL(url);
+            const last = u.pathname.split('/').filter(Boolean).pop();
+            return last || 'image';
+          } catch {
+            return 'image';
+          }
+        };
+        for (const it of items) {
+          if (resolved.length >= 10) break;
+          if (it && typeof it === 'object' && it.file_id) {
+            resolved.push(it);
+            continue;
+          }
+          const url = it && typeof it === 'object' ? it.image_url : undefined;
+          if (typeof url !== 'string') continue;
+          const { buf, contentType } = await downloadByUrlBuffer(url);
+          if (!buf) continue;
+          const fileId = await uploadBufferToArk(buf, urlToFilename(url), contentType);
+          resolved.push({ type: 'input_image', file_id: fileId } as any);
+        }
+        if (hasImageUrl && resolved.length === 0) {
+          const fallback = urlItems.slice(0, 10).map(it => ({ type: 'input_image', image_url: it.image_url } as any));
+          if (fallback.length === 0) {
+            throw new Error('图片下载失败：请检查图片链接是否可访问');
+          }
+          return fallback;
+        }
+        return resolved;
+      };
+      const resolvedImageItems = await resolveImageInputItems(imageInputItems);
 
       // 2. 构造 API 请求 Body
       const apiUrl = 'https://ark.cn-beijing.volces.com/api/v3/responses'; // 使用 Responses API
@@ -313,25 +629,10 @@ basekit.addField({
       let input: any;
       const shouldUseWebSearch = normalizedWebSearch === 'true' || normalizedWebSearch === true;
       const shouldUseWebSearchTool = shouldUseWebSearch;
-      if (imageUrls.length > 0) {
-        const maxImageCount = 10;
-        const limitedImageUrls = imageUrls.slice(0, maxImageCount);
-
-        // 多模态输入
-        const content: any[] = [];
-        limitedImageUrls.forEach(url => {
-          content.push({ type: 'input_image', image_url: url } as any);
-        });
+      if (resolvedImageItems.length > 0) {
+        const content: any[] = [...resolvedImageItems.slice(0, 10)];
         content.push({ type: 'input_text', text: String(normalizedPrompt ?? '') });
-        
-        // Responses API input 格式：可以是 string 或 list of messages
-        // 对于多模态，需要使用 message 格式
-        input = [
-            {
-                role: 'user',
-                content: content
-            }
-        ];
+        input = [{ role: 'user', content }];
       } else if (shouldUseWebSearchTool) {
         input = [
           {
@@ -380,13 +681,17 @@ basekit.addField({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
+          'Authorization': `Bearer ${effectiveApiKey}`,
         },
         body: JSON.stringify(requestBody),
       });
 
-      if (res.code === -1 || res.error) {
-         throw new Error(JSON.stringify(res.error));
+      if (res?.code === -1) {
+        throw new Error(JSON.stringify(res.error));
+      }
+      if (res?.error) {
+        const errMsg = formatArkErrorMessage(res);
+        throw new Error(errMsg || `请求失败：${JSON.stringify(res.error).slice(0, 2000)}`);
       }
 
       // 4. 解析结果
@@ -454,12 +759,13 @@ basekit.addField({
       debugLog({
         '===999 异常错误': String(e)
       });
+      const errMsg = e instanceof Error ? e.message : String(e);
       const groupKey = String((context as any)?.recordID || (context as any)?.logID || Date.now());
       return {
         code: FieldCode.Success,
         data: {
             groupKey,
-            result: `Error: ${String(e)}`,
+            result: `Error: ${errMsg}`,
             thinking: '',
             usage: '',
             cost: 0,
